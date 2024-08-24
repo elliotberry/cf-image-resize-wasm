@@ -1,4 +1,4 @@
-import kosherString from 'elliotisms/lib/kosher-string.js';
+
 
 const tryURL = url => {
   try {
@@ -50,4 +50,28 @@ const getVars = async req => {
   return {finalURL, targetWidth};
 };
 
-export default getVars;
+const getVarsTiny = async req => {
+  let target = req.paramz.url || req.paramz.u || req.paramz.target;
+  if (!target) {
+    throw new Error('No target param!');
+  }
+
+  //let result = await tryURL(target);
+
+  let decodedTarget = decodeURIComponent(target);
+  let finalURL = tryURL(decodedTarget);
+  if (finalURL === false) {
+    let b64 = tryBase64(target);
+    if (b64 !== false) {
+      finalURL = tryURL(b64);
+      if (finalURL === false) {
+        throw new Error('Invalid base64 URL');
+      }
+    } else {
+      throw new Error('no url param we recognize');
+    }
+  }
+
+  return {finalURL};
+};
+export {getVarsTiny, getVars};
