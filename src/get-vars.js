@@ -17,13 +17,15 @@ const tryBase64 = str => {
     return false;
   }
 };
+
+
 const getVars = async req => {
   let target = req.paramz.url || req.paramz.u || req.paramz.target;
   if (!target) {
     throw new Error('No target param!');
   }
 
-  //let result = await tryURL(target);
+ let targetHeight = null;
 
   let decodedTarget = decodeURIComponent(target);
   let finalURL = tryURL(decodedTarget);
@@ -40,14 +42,20 @@ const getVars = async req => {
   }
 
   const targetWidthStr = req.paramz.w || req.paramz.width;
-  if (!targetWidthStr) {
-    throw new Error('No width param!');
-  }
+  
   const targetWidth = targetWidthStr ? parseInt(targetWidthStr, 10) : null;
   if (isNaN(targetWidth) || targetWidth < 1) {
     throw new Error('width param is invalid');
   }
-  return {finalURL, targetWidth};
+const targetHeightStr = req.paramz.h || req.paramz.height;
+if (targetHeightStr) {
+  targetHeight = parseInt(targetHeightStr, 10);
+  if (isNaN(targetHeight) || targetHeight < 1) {
+    throw new Error('height param is invalid');
+  }
+}
+
+  return {finalURL, targetWidth, targetHeight};
 };
 
 const getVarsTiny = async req => {

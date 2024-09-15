@@ -8,9 +8,15 @@ function b64ToArrayBuffer(base64) {
   return new Uint8Array([...atob(base64)].map(c => c.charCodeAt(0)));
 }
 
-function resizeImage(imageBuffer, newWidth) {
+function resizeImage(imageBuffer, newWidth, newHeight) {
   const img = PhotonImage.new_from_byteslice(new Uint8Array(imageBuffer));
-  const newHeight = Math.round(img.get_height() * (newWidth / img.get_width()));
+  if (newWidth === null) {
+    newWidth = Math.round(img.get_width() * (newHeight / img.get_height()));
+  }
+  if (newHeight === null) {
+    newHeight = Math.round(img.get_height() * (newWidth / img.get_width()));
+  }
+ 
   const converted = resize(img, newWidth, newHeight, 1);
   const base64 = converted.get_base64();
   const mime = base64.split(';')[0].replace('data:', '');

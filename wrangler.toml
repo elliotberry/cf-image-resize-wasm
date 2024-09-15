@@ -1,5 +1,5 @@
 name = "resizr"
-main = "src/index.js"
+main = "./index.js"
 compatibility_date = "2024-06-03"
 [[rules]]
 type = "CompiledWasm"
