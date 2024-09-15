@@ -1,19 +1,20 @@
-import {AutoRouter, cors} from 'itty-router';
+import {Router} from 'itty-router';
 import resizeImage from './src/resize.js';
 import {before, after} from './src/middlewares.js';
 import {getVars, getVarsTiny} from './src/get-vars.js';
+import form from './src/form.html';
 
-
-
-const router = AutoRouter({
+const router = Router({
   before: [before],
   finally: [after],
 });
 
 
-
-
-
+router.get('/', async request => {
+  return new Response(form, {
+    headers: {'content-type': 'text/html'},
+  });
+});
 router.get('/tiny', async request => {
   const vars = await getVarsTiny(request);
 

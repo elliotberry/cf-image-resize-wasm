@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer</title>
+</head>
+<body>
+    <form id="resizeForm" action="https://resizr.daddy.workers.dev/resize/" method="get">
+        <label for="url">Image URL:</label>
+        <input type="text" id="url" name="url" required>
+        <br><br>
+        <label for="w">Width:</label>
+        <input type="number" id="w" name="w" required>
+        <br><br>
+        <label for="h">Height:</label>
+        <input type="number" id="h" name="h" required>
+        <br><br>
+        <button type="submit">Resize Image</button>
+    </form>
+</body>
+</html>

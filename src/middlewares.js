@@ -38,7 +38,6 @@ const before = async request => {
   const cache = caches.default;
   const resp = await cache.match(request.url);
   if (resp) {
-    console.log('serving from cache');
     return resp;
   } else {
     //after the request, we cache result on cf
@@ -53,8 +52,7 @@ const after = async (response, request) => {
 
   if (request.shouldCache) {
     const cache = caches.default;
-
-    const g = await cache.put(request.url, response.clone());
+    await cache.put(request.url, response.clone());
   }
   const respy = new Response(response.body, response);
   return appendHeadersAndReturn(respy, defaultHeaders);
