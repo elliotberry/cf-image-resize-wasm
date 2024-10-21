@@ -1,14 +1,15 @@
 const defaultHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-credentials': 'true',
-  'access-control-expose-headers': '*',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Expose-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Thoughts': '',
 };
 
 const appendHeadersAndReturn = (response, headers) => {
   for (const [key, value] of Object.entries(headers)) {
-    if (value) response.headers.append(key, value);
+    if (value) response.headers.set(key, value); // Use `set` to avoid duplicate headers
   }
   return response;
 };
@@ -18,44 +19,70 @@ function parseUrlParams(url) {
   const paramObject = {};
 
   for (const [key, value] of params) {
-    // Split values by comma if they're comma-separated
-    paramObject[key] = value.includes(',') ? value.split(',') : value;
+    paramObject[key] = value.includes(',') ? value.split(',') : value; // Handle comma-separated values
   }
 
   return paramObject;
 }
 
-const before = async request => {
+const before = async (request) => {
+  if (request.method === 'OPTIONS') {
+    // Return preflight response with appropriate headers
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...defaultHeaders,
+        'Access-Control-Max-Age': '86400', // Cache preflight response for 24 hours
+      },
+    });
+  }
   let obj = parseUrlParams(request.url);
   request.paramz = obj;
-
-  //preflight options request for corsc
-  if (request.method == 'OPTIONS') {
-    const response = new Response(null, {status: 204});
-
-    return appendHeadersAndReturn(response, defaultHeaders);
+  if (request.url.includes("clear-cache")) {
+    const cache = caches.default;
+    await cache.delete(request.url);
+    request.shouldCache = false;
   }
-  const cache = caches.default;
-  const resp = await cache.match(request.url);
-  if (resp) {
-    return resp;
+
+  if (!request.url.includes('nocache')) {
+    const cache = caches.default;
+    const cachedResponse = await cache.match(request.url);
+    if (cachedResponse) {
+      console.log('Serving from cache');
+      return cachedResponse;
+    } else {
+      request.shouldCache = true;
+    }
   } else {
-    //after the request, we cache result on cf
-    request.shouldCache = true;
+    console.log('Cache bypassed');
   }
+};
+
+const authenticateRequest = (request) => {
+  // Replace this with a proper authentication mechanism
+  const clientIP = request.headers.get("CF-Connecting-IP");
+  if (clientIP !== "130.44.182.125") {
+    return new Response("Unauthorized access", { status: 401 }); // Changed to 401 for proper HTTP compliance
+  }
+}
+
+const shouldCache = (response, request) => {
+  return (
+    request.shouldCache &&
+    request.method === 'GET' &&
+    !request.url.includes('nocache') &&
+    response.ok // Cache only successful responses
+  );
 };
 
 const after = async (response, request) => {
-  if (response?.headers?.get('access-control-allow-origin') || response.status == 101 || response.status === 206 || !response.ok) {
-    return response;
-  }
-
-  if (request.shouldCache) {
+  if (shouldCache(response, request)) {
     const cache = caches.default;
     await cache.put(request.url, response.clone());
   }
-  const respy = new Response(response.body, response);
-  return appendHeadersAndReturn(respy, defaultHeaders);
+
+  const respy = new Response(response.body, response)
+  return appendHeadersAndReturn(respy, defaultHeaders)
 };
 
-export {before, after};
+export { before, after };

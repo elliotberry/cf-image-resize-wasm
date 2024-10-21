@@ -15,6 +15,7 @@ router.get('/', async request => {
     headers: {'content-type': 'text/html'},
   });
 });
+
 router.get('/tiny', async request => {
   const vars = await getVarsTiny(request);
 

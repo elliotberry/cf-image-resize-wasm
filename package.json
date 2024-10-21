@@ -2,7 +2,7 @@
   "name": "image-resize-proxy",
   "version": "0.0.0",
   "devDependencies": {
-    "wrangler": "^3.58.0"
+    "wrangler": "^3.81.0"
   },
   "private": true,
   "scripts": {
@@ -10,8 +10,6 @@
     "deploy": "wrangler publish"
   },
   "dependencies": {
-    "@silvia-odwyer/photon": "0.3.2",
-    "@silvia-odwyer/photon-node": "^0.3.3",
-    "itty-router": "^5.0.17"
+    "itty-router": "^5.0.18"
   }
 }
