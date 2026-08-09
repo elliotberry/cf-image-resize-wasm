@@ -1,0 +1,111 @@
+cf-image-resize-proxy-wasm
+==========================
+
+Image resize proxy for Cloudflare Workers. Fetches a remote image, optionally
+resizes it with Photon (WebAssembly), and returns the result. Successful GET
+responses are cached at the edge unless caching is bypassed.
+
+
+GENERAL
+-------
+- Method: GET (OPTIONS supported for CORS preflight)
+- CORS: All responses include Access-Control-Allow-Origin: *
+- Content-Type of image responses: taken from the upstream image's Content-Type
+  header (the resized body may still be encoded as PNG by the WASM pipeline)
+
+
+CACHE CONTROL (applies to all routes)
+-------------------------------------
+These are URL substring flags (query or path), not formal parameters:
+
+  nocache
+    Bypass the Cache API for this request. The response is not read from or
+    written to cache.
+
+  clear-cache
+    Delete any existing Cache API entry for this exact request URL, then
+    continue handling the request. Caching of the new response is disabled
+    for that request.
+
+
+-------------------------------------------------------------------------------
+GET /
+-------------------------------------------------------------------------------
+Returns this plain-text API reference (Content-Type: text/plain).
+
+No parameters.
+
+
+-------------------------------------------------------------------------------
+GET /form
+-------------------------------------------------------------------------------
+Returns a small HTML form that submits to /resize.
+
+No parameters.
+
+
+-------------------------------------------------------------------------------
+GET /resize
+-------------------------------------------------------------------------------
+Fetch an image from a remote URL and resize it.
+
+Required
+  url | u | target
+    Source image location.
+    Accepted forms:
+      1) A normal URL (may be percent-encoded), e.g.
+           https%3A%2F%2Fexample.com%2Fphoto.jpg
+         or
+           https://example.com/photo.jpg
+      2) A base64-encoded URL string (decoded with atob, then parsed as a URL)
+
+  w | width
+    Target width in pixels. Must be an integer >= 1.
+    (If omitted or invalid, the request fails with an error.)
+
+Optional
+  h | height
+    Target height in pixels. Must be an integer >= 1 when provided.
+    If omitted, height is computed to preserve the source aspect ratio.
+
+Behavior
+  - Upstream image is fetched with GET. Non-200 responses fail the request.
+  - If both width and height were somehow null, the original bytes would be
+    returned unchanged; in practice width is required by validation above.
+  - Resize uses Photon's resize filter (Lanczos3 / sampling filter index 1).
+  - Response body is the resized image bytes.
+
+Examples
+  /resize?url=https://example.com/cat.jpg&w=200
+  /resize?url=https://example.com/cat.jpg&w=200&h=200
+  /resize?u=https://example.com/cat.jpg&width=320
+  /resize?url=https://example.com/cat.jpg&w=100&nocache
+
+
+-------------------------------------------------------------------------------
+GET /tiny
+-------------------------------------------------------------------------------
+Fetch an image and resize it to a fixed width of 20px (height keeps aspect
+ratio). Useful for lightweight thumbnails / placeholders.
+
+Required
+  url | u | target
+    Same rules as /resize (plain URL, percent-encoded URL, or base64 URL).
+
+Optional
+  (none — width is hard-coded to 20; height is derived)
+
+Examples
+  /tiny?url=https://example.com/cat.jpg
+  /tiny?u=https://example.com/cat.jpg&nocache
+
+
+ERRORS
+------
+Failures throw and typically surface as HTTP 500 with a plain-text message.
+Common cases:
+  - Missing url / u / target
+  - URL that is neither a valid URL nor valid base64-of-a-URL
+  - Invalid width (missing, non-numeric, or < 1) on /resize
+  - Invalid height (< 1) when h/height is supplied on /resize
+  - Upstream fetch not HTTP 200

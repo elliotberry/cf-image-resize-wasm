@@ -3,14 +3,20 @@ import resizeImage from './src/resize.js';
 import {before, after} from './src/middlewares.js';
 import {getVars, getVarsTiny} from './src/get-vars.js';
 import form from './src/form.html';
+import routesText from './src/routes.txt';
 
 const router = Router({
   before: [before],
   finally: [after],
 });
 
+router.get('/', async () => {
+  return new Response(routesText, {
+    headers: {'content-type': 'text/plain; charset=utf-8'},
+  });
+});
 
-router.get('/', async request => {
+router.get('/form', async () => {
   return new Response(form, {
     headers: {'content-type': 'text/html'},
   });
