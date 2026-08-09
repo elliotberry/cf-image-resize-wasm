@@ -1,9 +1,9 @@
 import wasm from "./photon.wasm";
-import * as photon from "./photon_rs_bg.js";
+import { initSync } from "./photon_rs_bg.js";
+
 const loadPhotonWasm = () => {
-    const instance = new WebAssembly.Instance(wasm, {
-        "./photon_rs_bg.js": photon,
-    });
-    photon.setWasm(instance.exports);
+  // Cloudflare Workers CompiledWasm imports are WebAssembly.Module instances.
+  initSync({ module: wasm });
 };
+
 export default loadPhotonWasm;

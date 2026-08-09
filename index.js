@@ -29,7 +29,7 @@ router.get('/tiny', async request => {
   let mime = res.headers.get('Content-Type');
 
   const receivedBuffer = await res.arrayBuffer();
-  let {imageBytes} = resizeImage(receivedBuffer, 20);
+  let {imageBytes} = resizeImage(receivedBuffer, 20, null);
 
   return new Response(imageBytes, {
     headers: {'content-type': mime},
