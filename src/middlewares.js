@@ -67,18 +67,34 @@ const authenticateRequest = (request) => {
 }
 
 const shouldCache = (response, request) => {
-  return (
-    request.shouldCache &&
+  return Boolean(
+    response &&
+    request?.shouldCache &&
     request.method === 'GET' &&
     !request.url.includes('nocache') &&
-    response.ok // Cache only successful responses
+    response.status === 200
   );
 };
 
 const after = async (response, request) => {
+  if (!response) {
+    const path = new URL(request.url).pathname;
+    response = new Response(
+      `Not found: ${path}\n\nOpen / for usage, or /form to resize an image.`,
+      {
+        status: 404,
+        headers: {'content-type': 'text/plain; charset=utf-8'},
+      },
+    );
+  }
+
   if (shouldCache(response, request)) {
-    const cache = caches.default;
-    await cache.put(request.url, response.clone());
+    try {
+      const cache = caches.default;
+      await cache.put(request.url, response.clone());
+    } catch (err) {
+      console.log('Cache write skipped:', err?.message || err);
+    }
   }
 
   const respy = new Response(response.body, response)

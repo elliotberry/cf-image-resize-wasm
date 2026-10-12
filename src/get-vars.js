@@ -1,4 +1,9 @@
 
+import {StatusError} from 'itty-router';
+
+const fail = message => {
+  throw new StatusError(400, message);
+};
 
 const tryURL = url => {
   try {
@@ -22,7 +27,7 @@ const tryBase64 = str => {
 const getVars = async req => {
   let target = req.paramz.url || req.paramz.u || req.paramz.target;
   if (!target) {
-    throw new Error('No target param!');
+    fail('No target param!');
   }
 
  let targetHeight = null;
@@ -34,10 +39,10 @@ const getVars = async req => {
     if (b64 !== false) {
       finalURL = tryURL(b64);
       if (finalURL === false) {
-        throw new Error('Invalid base64 URL');
+        fail('Invalid base64 URL');
       }
     } else {
-      throw new Error('no url param we recognize');
+      fail('no url param we recognize');
     }
   }
 
@@ -45,13 +50,13 @@ const getVars = async req => {
   
   const targetWidth = targetWidthStr ? parseInt(targetWidthStr, 10) : null;
   if (isNaN(targetWidth) || targetWidth < 1) {
-    throw new Error('width param is invalid');
+    fail('width param is invalid');
   }
 const targetHeightStr = req.paramz.h || req.paramz.height;
 if (targetHeightStr) {
   targetHeight = parseInt(targetHeightStr, 10);
   if (isNaN(targetHeight) || targetHeight < 1) {
-    throw new Error('height param is invalid');
+    fail('height param is invalid');
   }
 }
 
@@ -61,7 +66,7 @@ if (targetHeightStr) {
 const getVarsTiny = async req => {
   let target = req.paramz.url || req.paramz.u || req.paramz.target;
   if (!target) {
-    throw new Error('No target param!');
+    fail('No target param!');
   }
 
   //let result = await tryURL(target);
@@ -73,10 +78,10 @@ const getVarsTiny = async req => {
     if (b64 !== false) {
       finalURL = tryURL(b64);
       if (finalURL === false) {
-        throw new Error('Invalid base64 URL');
+        fail('Invalid base64 URL');
       }
     } else {
-      throw new Error('no url param we recognize');
+      fail('no url param we recognize');
     }
   }
 

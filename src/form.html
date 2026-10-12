@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Resizer</title>
+    <style>
+        #status {
+            white-space: pre-wrap;
+            max-width: 40rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #c44;
+            background: #fff4f4;
+        }
+        #result { max-width: 100%; margin-top: 1rem; }
+    </style>
 </head>
 <body>
     <form id="resizeForm" action="/resize" method="get">
@@ -18,5 +28,45 @@
         <br><br>
         <button type="submit">Resize Image</button>
     </form>
+    <p id="status" hidden></p>
+    <img id="result" alt="Resized image" hidden>
+    <script>
+        const form = document.getElementById('resizeForm');
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+        let objectUrl;
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            status.hidden = true;
+            result.hidden = true;
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = undefined;
+            }
+            result.removeAttribute('src');
+
+            const params = new URLSearchParams(new FormData(form));
+            let response;
+            try {
+                response = await fetch('/resize?' + params.toString());
+            } catch (err) {
+                status.textContent = 'The resize request failed before a response arrived.\n\n' + (err?.message || err);
+                status.hidden = false;
+                return;
+            }
+
+            const type = response.headers.get('content-type') || '';
+            if (response.ok && type.startsWith('image/')) {
+                objectUrl = URL.createObjectURL(await response.blob());
+                result.src = objectUrl;
+                result.hidden = false;
+                return;
+            }
+
+            status.textContent = await response.text();
+            status.hidden = false;
+        });
+    </script>
 </body>
 </html>

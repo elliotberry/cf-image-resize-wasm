@@ -102,10 +102,14 @@ Examples
 
 ERRORS
 ------
-Failures throw and typically surface as HTTP 500 with a plain-text message.
-Common cases:
-  - Missing url / u / target
-  - URL that is neither a valid URL nor valid base64-of-a-URL
-  - Invalid width (missing, non-numeric, or < 1) on /resize
-  - Invalid height (< 1) when h/height is supplied on /resize
-  - Upstream fetch not HTTP 200
+Failures are returned as plain text (Content-Type: text/plain) with an HTTP
+status. The body is the explanation. Common cases:
+  - 400 Missing url / u / target
+  - 400 URL that is neither a valid URL nor valid base64-of-a-URL
+  - 400 Invalid width (missing, non-numeric, or < 1) on /resize
+  - 400 Invalid height (< 1) when h/height is supplied on /resize
+  - 502 Upstream fetch was not HTTP 200. A 403 from the image host is included
+    here: the host refused the download (hotlink protection, a login wall, or
+    a bot check), so the worker cannot resize that image.
+  - 204 /favicon.ico. Browsers request this automatically; there is no icon.
+  - 404 Any other unknown path. The body names the path and points to /.

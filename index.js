@@ -1,13 +1,19 @@
-import {Router} from 'itty-router';
+import {Router, text} from 'itty-router';
 import resizeImage from './src/resize.js';
 import {before, after} from './src/middlewares.js';
 import {getVars, getVarsTiny} from './src/get-vars.js';
+import fetchImage from './src/fetch-image.js';
 import form from './src/form.html';
 import routesText from './src/routes.txt';
 
 const router = Router({
   before: [before],
   finally: [after],
+  catch: error => {
+    const status = Number.isInteger(error?.status) ? error.status : 500;
+    const message = error?.message || 'Something went wrong.';
+    return text(message, {status});
+  },
 });
 
 router.get('/', async () => {
@@ -22,15 +28,14 @@ router.get('/form', async () => {
   });
 });
 
+router.get('/favicon.ico', () => new Response(null, {status: 204}));
+
 router.get('/tiny', async request => {
   const vars = await getVarsTiny(request);
 
   let {finalURL} = vars;
 
-  const res = await fetch(finalURL);
-  if (!res.ok || res.status !== 200) {
-    throw new Error('Failed to fetch: ' + res.status + ' ' + res.statusText);
-  }
+  const res = await fetchImage(finalURL);
 
   let mime = res.headers.get('Content-Type');
 
@@ -47,10 +52,7 @@ router.get('/resize', async request => {
 
   let {finalURL, targetWidth, targetHeight} = vars;
 
-  const res = await fetch(finalURL);
-  if (!res.ok || res.status !== 200) {
-    throw new Error('Failed to fetch: ' + res.status + ' ' + res.statusText);
-  }
+  const res = await fetchImage(finalURL);
 
   let mime = res.headers.get('Content-Type');
 
@@ -65,6 +67,14 @@ router.get('/resize', async request => {
   return new Response(imageBytes, {
     headers: {'content-type': mime},
   });
+});
+
+router.all('*', request => {
+  const path = new URL(request.url).pathname;
+  return text(
+    `Not found: ${path}\n\nOpen / for usage, or /form to resize an image.`,
+    {status: 404},
+  );
 });
 
 export default router;
